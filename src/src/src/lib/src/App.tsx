@@ -1,18 +1,17 @@
+
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Disc,
   FolderOpen,
-  Mic,
-  Music,
   Pause,
   Play,
   Radio,
   Search,
   Sliders,
   Sparkles,
-  Square,
   Usb,
   Volume2,
+  Music,
 } from 'lucide-react';
 import {
   DeckTrack,
@@ -34,10 +33,6 @@ type MidiAction =
   | 'deck1_mid'
   | 'deck1_high'
   | 'deck1_filter'
-  | 'deck1_stem_vocal'
-  | 'deck1_stem_drums'
-  | 'deck1_stem_bass'
-  | 'deck1_stem_melody'
   | 'deck2_play'
   | 'deck2_cue'
   | 'deck2_sync'
@@ -48,12 +43,7 @@ type MidiAction =
   | 'deck2_mid'
   | 'deck2_high'
   | 'deck2_filter'
-  | 'deck2_stem_vocal'
-  | 'deck2_stem_drums'
-  | 'deck2_stem_bass'
-  | 'deck2_stem_melody'
-  | 'crossfader'
-  | 'master_vol';
+  | 'crossfader';
 
 const DEFAULT_MIDI_MAP: Record<string, MidiAction> = {
   '144:11': 'deck1_play',
@@ -106,13 +96,11 @@ export default function App() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
 
-  // Library & Crates
   const [library, setLibrary] = useState<DeckTrack[]>([]);
   const [selectedCrate, setSelectedCrate] = useState<string>('All Audio');
   const [searchQuery, setSearchQuery] = useState('');
   const [clock, setClock] = useState('');
 
-  // Deck 1 State
   const [d1Track, setD1Track] = useState<DeckTrack | null>(null);
   const [d1Playing, setD1Playing] = useState(false);
   const [d1Time, setD1Time] = useState(0);
@@ -124,7 +112,6 @@ export default function App() {
   const [d1Cues, setD1Cues] = useState<(number | null)[]>(Array(8).fill(null));
   const [d1Level, setD1Level] = useState(0);
 
-  // Deck 2 State
   const [d2Track, setD2Track] = useState<DeckTrack | null>(null);
   const [d2Playing, setD2Playing] = useState(false);
   const [d2Time, setD2Time] = useState(0);
@@ -136,13 +123,11 @@ export default function App() {
   const [d2Cues, setD2Cues] = useState<(number | null)[]>(Array(8).fill(null));
   const [d2Level, setD2Level] = useState(0);
 
-  // Mixer & Top Toolbar
   const [crossfader, setCrossfader] = useState(0.5);
   const [masterVol, setMasterVol] = useState(0.9);
   const [isRecording, setIsRecording] = useState(false);
   const [showSampler, setShowSampler] = useState(true);
 
-  // Universal USB MIDI State
   const [midiDeviceName, setMidiDeviceName] = useState<string | null>(null);
   const [midiPreset, setMidiPreset] = useState<string>('Auto-Detect Universal');
   const [midiLearnMode, setMidiLearnMode] = useState(false);
@@ -156,13 +141,11 @@ export default function App() {
     }
   });
 
-  // Canvases
   const d1PlatterRef = useRef<HTMLCanvasElement | null>(null);
   const d2PlatterRef = useRef<HTMLCanvasElement | null>(null);
   const centerWaveRef = useRef<HTMLCanvasElement | null>(null);
   const scratchDragRef = useRef<{ deck: 1 | 2; lastX: number } | null>(null);
 
-  // Initialize AudioContext + Built-In Starter Tracks
   const ensureAudio = useCallback(() => {
     if (audioCtxRef.current) {
       if (audioCtxRef.current.state === 'suspended') {
@@ -170,7 +153,9 @@ export default function App() {
       }
       return audioCtxRef.current;
     }
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new AudioCtx();
     const master = ctx.createGain();
     master.gain.value = 0.9;
@@ -220,13 +205,18 @@ export default function App() {
     });
 
     setLibrary(built);
-    setD1Track(built[0]);
-    deck1EngineRef.current?.loadBuffer(built[0].buffer!);
-    setD2Track(built[1]);
-    deck2EngineRef.current?.loadBuffer(built[1].buffer!);
+    const first = built[0];
+    const second = built[1];
+    if (first && first.buffer) {
+      setD1Track(first);
+      deck1EngineRef.current?.loadBuffer(first.buffer);
+    }
+    if (second && second.buffer) {
+      setD2Track(second);
+      deck2EngineRef.current?.loadBuffer(second.buffer);
+    }
   }, [ensureAudio]);
 
-  // Clock
   useEffect(() => {
     const tick = () => {
       const now = new Date();
@@ -237,7 +227,6 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  // Load Track onto Deck 1 or Deck 2
   const loadTrackToDeck = useCallback(
     (deck: 1 | 2, track: DeckTrack) => {
       ensureAudio();
@@ -265,7 +254,6 @@ export default function App() {
     [ensureAudio]
   );
 
-  // Import Local MP3 / WAV files from laptop
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -292,3 +280,17 @@ export default function App() {
           album: 'Imported Audio',
           length: `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.0`,
           genre: 'Local MP3',
+          musicalKey: '9d',
+          buffer: audioBuf,
+          peaks: extractWaveformPeaks(audioBuf),
+        });
+      } catch {
+        // skip unsupported file
+      }
+    }
+
+    if (loaded.length > 0) {
+      setLibrary((prev) => [...loaded, ...prev]);
+      loadTrackToDeck(1, loaded[0]);
+      if (loaded.length > 1) loadTrackToDeck(2, loaded[1]);
+    }
