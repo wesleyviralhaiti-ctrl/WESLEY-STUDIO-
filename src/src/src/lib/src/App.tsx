@@ -68,24 +68,37 @@ const DEFAULT_MIDI_MAP: Record<string, MidiAction> = {
   '182:31': 'crossfader',
 };
 
-const HOT_CUE_COLORS = ['#EF4444', '#3B82F6', '#22C55E', '#EAB308', '#F97316', '#A855F7', '#06B6D4', '#EC4899'];
-const VINYL_GROOVES =;
-const LOOP_BEATS = [0.25, 0.5, 1, 2, 4, 8, 16, 32];
-const CRATE_LIST = [
+const HOT_CUE_COLORS = [
+  '#EF4444',
+  '#3B82F6',
+  '#22C55E',
+  '#EAB308',
+  '#F97316',
+  '#A855F7',
+  '#06B6D4',
+  '#EC4899',
+];
+
+const VINYL_GROOVES = Array.of(32, 48, 64, 76);
+const LOOP_BEATS = Array.of(0.25, 0.5, 1, 2, 4, 8, 16, 32);
+
+const CRATE_LIST = Array.of(
   { name: 'All Audio', color: 'text-blue-400' },
   { name: 'Konpa', color: 'text-emerald-400' },
   { name: 'Rabòday', color: 'text-orange-400' },
   { name: 'Rap Kreyòl', color: 'text-purple-400' },
   { name: 'Afrobeat', color: 'text-yellow-400' },
-  { name: 'Local MP3', color: 'text-cyan-400' },
-];
-const STEM_BUTTONS = [
+  { name: 'Local MP3', color: 'text-cyan-400' }
+);
+
+const STEM_BUTTONS = Array.of(
   { key: 'vocal' as const, label: '🎤 VOCAL', color: 'bg-cyan-600 border-cyan-400' },
   { key: 'drums' as const, label: '🥁 DRUMS', color: 'bg-amber-600 border-amber-400' },
   { key: 'bass' as const, label: '🎸 BASS', color: 'bg-purple-600 border-purple-400' },
-  { key: 'melody' as const, label: '🎹 MELODY', color: 'bg-emerald-600 border-emerald-400' },
-];
-const SAMPLER_PADS = [
+  { key: 'melody' as const, label: '🎹 MELODY', color: 'bg-emerald-600 border-emerald-400' }
+);
+
+const SAMPLER_PADS = Array.of(
   { id: 'horn' as const, label: '🚨 AIR HORN', color: 'border-red-500/60 text-red-300 hover:bg-red-500/20' },
   { id: 'laser' as const, label: '⚡ LASER', color: 'border-cyan-500/60 text-cyan-300 hover:bg-cyan-500/20' },
   { id: 'drop' as const, label: '💥 SUB DROP', color: 'border-purple-500/60 text-purple-300 hover:bg-purple-500/20' },
@@ -93,8 +106,8 @@ const SAMPLER_PADS = [
   { id: 'scratch' as const, label: '💿 SCRATCH', color: 'border-blue-500/60 text-blue-300 hover:bg-blue-500/20' },
   { id: 'kick' as const, label: '🥁 808 KICK', color: 'border-emerald-500/60 text-emerald-300 hover:bg-emerald-500/20' },
   { id: 'clap' as const, label: '👏 CLAP', color: 'border-pink-500/60 text-pink-300 hover:bg-pink-500/20' },
-  { id: 'riser' as const, label: '🌊 RISER', color: 'border-yellow-500/60 text-yellow-300 hover:bg-yellow-500/20' },
-];
+  { id: 'riser' as const, label: '🌊 RISER', color: 'border-yellow-500/60 text-yellow-300 hover:bg-yellow-500/20' }
+);
 
 function formatTime(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return '00:00.0';
@@ -167,7 +180,9 @@ export default function App() {
       if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
       return audioCtxRef.current;
     }
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new AudioCtx();
     const master = ctx.createGain();
     master.gain.value = 0.9;
@@ -181,14 +196,14 @@ export default function App() {
 
   useEffect(() => {
     const ctx = ensureAudio();
-    const starters = [
+    const starters = Array.of(
       { id: 'st_1', title: 'Kreyòl Sunset Groove (Live)', artist: 'DJ Wesley VIP', bpm: 98, album: 'Konpa Sessions Vol. 1', genre: 'Konpa', key: '9d', style: 'konpa' as const },
       { id: 'st_2', title: 'Port-au-Prince Bassline', artist: 'Rabòday Riddim Crew', bpm: 126, album: 'Ayiti Chofe', genre: 'Rabòday', key: '11d', style: 'raboday' as const },
       { id: 'st_3', title: 'Delmas Midnight Konpa', artist: 'Klass & DJ Wesley', bpm: 95, album: 'Konpa Gold', genre: 'Konpa', key: '8m', style: 'konpa' as const },
       { id: 'st_4', title: 'Lagos To Jacmel Riddim', artist: 'AfroKreyòl Sound', bpm: 114, album: 'Afrobeat Fusion', genre: 'Afrobeat', key: '12m', style: 'afrobeat' as const },
       { id: 'st_5', title: 'Petion-Ville Heavy Drill', artist: '808 Haiti', bpm: 142, album: 'Street Anthems', genre: 'Rap Kreyòl', key: '6m', style: 'drill' as const },
-      { id: 'st_6', title: 'Kanaval 2026 Brass Drop', artist: 'DJ Wesley Studio', bpm: 130, album: 'Kanaval Pack', genre: 'Rabòday', key: '10d', style: 'raboday' as const },
-    ];
+      { id: 'st_6', title: 'Kanaval 2026 Brass Drop', artist: 'DJ Wesley Studio', bpm: 130, album: 'Kanaval Pack', genre: 'Rabòday', key: '10d', style: 'raboday' as const }
+    );
 
     const built: DeckTrack[] = starters.map((s) => {
       const buf = synthesizeStarterTrack(ctx, s.bpm, s.style);
@@ -207,13 +222,15 @@ export default function App() {
     });
 
     setLibrary(built);
-    if (built[0]?.buffer) {
-      setD1Track(built[0]);
-      deck1EngineRef.current?.loadBuffer(built[0].buffer);
+    const first = built.at(0);
+    const second = built.at(1);
+    if (first && first.buffer) {
+      setD1Track(first);
+      deck1EngineRef.current?.loadBuffer(first.buffer);
     }
-    if (built[1]?.buffer) {
-      setD2Track(built[1]);
-      deck2EngineRef.current?.loadBuffer(built[1].buffer);
+    if (second && second.buffer) {
+      setD2Track(second);
+      deck2EngineRef.current?.loadBuffer(second.buffer);
     }
   }, [ensureAudio]);
 
@@ -244,10 +261,3 @@ export default function App() {
         setD2Time(0);
         setD2Pitch(1.0);
         setD2Loop(null);
-        setD2Cues(Array(8).fill(null));
-        setD2Stems({ vocal: true, drums: true, bass: true, melody: true });
-      }
-    },
-    [ensureAudio]
-  );
-
