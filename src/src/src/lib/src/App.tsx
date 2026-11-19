@@ -1,8 +1,8 @@
-
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Disc,
   FolderOpen,
+  Music,
   Pause,
   Play,
   Radio,
@@ -11,7 +11,6 @@ import {
   Sparkles,
   Usb,
   Volume2,
-  Music,
 } from 'lucide-react';
 import {
   DeckTrack,
@@ -79,6 +78,8 @@ const HOT_CUE_COLORS = [
   '#06B6D4',
   '#EC4899',
 ];
+
+const VINYL_GROOVES = Array.of(32, 48, 64, 76);
 
 function formatTime(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return '00:00.0';
@@ -205,8 +206,8 @@ export default function App() {
     });
 
     setLibrary(built);
-    const first = built[0];
-    const second = built[1];
+    const first = built.at(0);
+    const second = built.at(1);
     if (first && first.buffer) {
       setD1Track(first);
       deck1EngineRef.current?.loadBuffer(first.buffer);
@@ -260,20 +261,19 @@ export default function App() {
     const ctx = ensureAudio();
     const loaded: DeckTrack[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    for (const file of Array.from(files)) {
       try {
         const arrBuf = await file.arrayBuffer();
         const audioBuf = await ctx.decodeAudioData(arrBuf);
         const cleanName = file.name.replace(/\.[^/.]+$/, '');
         const parts = cleanName.split(' - ');
-        const artist = parts.length > 1 ? parts[0].trim() : 'Local MP3';
+        const artist = parts.length > 1 ? (parts.at(0) || 'Local MP3').trim() : 'Local MP3';
         const title = parts.length > 1 ? parts.slice(1).join(' - ').trim() : cleanName;
         const mins = Math.floor(audioBuf.duration / 60);
         const secs = Math.floor(audioBuf.duration % 60);
 
         loaded.push({
-          id: `loc_${Date.now()}_${i}`,
+          id: `loc_${Date.now()}_${loaded.length}`,
           title,
           artist,
           bpm: 118,
@@ -291,6 +291,4 @@ export default function App() {
 
     if (loaded.length > 0) {
       setLibrary((prev) => [...loaded, ...prev]);
-      loadTrackToDeck(1, loaded[0]);
-      if (loaded.length > 1) loadTrackToDeck(2, loaded[1]);
-    }
+      const t1 = loaded.at(0);
